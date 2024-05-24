@@ -5,10 +5,10 @@ const nodemailer = require('nodemailer');
 const admin = require('firebase-admin');
 const serviceAccount = require('../../config/service-account-file.json');
 
-// Load environment variables
+// Memuat variabel
 dotenv.config();
 
-// Replace with your JWT secret key
+// Mengganti dengan kunci rahasia JWT
 const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret_key';
 
 // twilio
@@ -17,7 +17,7 @@ const client = require('twilio')(
   process.env.TWILIO_AUTH_TOKEN,
 );
 
-// email verification
+// verifikasi email
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   host: 'smtp.gmail.com',
@@ -33,11 +33,12 @@ admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
 });
 
+// untuk mendaftarkan pengguna baru
 exports.registerUser = async (req, res) => {
   const {name, email, password, phoneNumber} = req.body;
 
   try {
-    // Call registerUser method from Auth model to register a new user
+    // memanggil metode registerUser dari model Auth untuk mendaftarkan pengguna baru
     const {userId} = await Auth.registerUser(
       name,
       email,
@@ -57,13 +58,14 @@ exports.registerUser = async (req, res) => {
   }
 };
 
+// untuk login pengguna
 exports.loginUser = async (req, res) => {
   const {email, password} = req.body;
 
   try {
     const user = await Auth.loginUser(email, password);
 
-    // Generate JWT access token and refresh token
+    // membuat access token JWT dan refresh token
     const accessToken = jwt.sign({userId: user.user_id}, JWT_SECRET, {
       expiresIn: '1h',
     });
@@ -71,10 +73,10 @@ exports.loginUser = async (req, res) => {
       expiresIn: '7d',
     });
 
-    // Store the new tokens in the database
+    // meyimpan token baru dalam database
     await Auth.updateTokens(user.user_id, accessToken, refreshToken);
 
-    // Respond with tokens
+    // menanggapi token
     res.json({
       accessToken,
       refreshToken,
@@ -87,6 +89,7 @@ exports.loginUser = async (req, res) => {
   }
 };
 
+// untuk mengirim email verifikasi
 exports.sendEmailVerification = async (req, res) => {
   const {userId, email} = req.body;
   const emailToken = Math.floor(100000 + Math.random() * 900000);
@@ -114,6 +117,7 @@ exports.sendEmailVerification = async (req, res) => {
   }
 };
 
+// untuk memverifikasi email
 exports.verifyEmail = async (req, res) => {
   const {userId, emailToken} = req.body;
 
@@ -130,6 +134,7 @@ exports.verifyEmail = async (req, res) => {
   }
 };
 
+// untuk mengirim verifikasi nomor telepon
 exports.sendPhoneVerification = async (req, res) => {
   const {userId, phoneNumber} = req.body;
   const smsToken = Math.floor(100000 + Math.random() * 900000);
@@ -158,6 +163,7 @@ exports.sendPhoneVerification = async (req, res) => {
   }
 };
 
+// untuk memverifikasi nomor telepon
 exports.verifyPhone = async (req, res) => {
   const {userId, smsToken} = req.body;
 
@@ -174,6 +180,7 @@ exports.verifyPhone = async (req, res) => {
   }
 };
 
+// untuk memverifikasi token google
 exports.googleVerifyToken = async (req, res) => {
   const {id_token} = req.body;
   try {
@@ -189,6 +196,7 @@ exports.googleVerifyToken = async (req, res) => {
   }
 };
 
+// untuk refresh token
 exports.refreshToken = async (req, res) => {
   const {uid} = req.body;
   try {
@@ -209,6 +217,7 @@ exports.refreshToken = async (req, res) => {
   }
 };
 
+// untuk memperbarui pengguna google
 exports.googleUpdateUser = async (req, res) => {
   const {uid, name, phoneNumber} = req.body;
   try {
