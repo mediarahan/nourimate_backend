@@ -3,16 +3,16 @@ const express = require('express');
 const dotenv = require('dotenv');
 const verifyToken = require('./middleware/auth');
 
-// Load environment variables
+// memuat variabel
 dotenv.config();
 
-// Create Express app
+// membuat aplikasi Express
 const app = express();
 
-// Middleware for parsing JSON requests
+// middleware untuk mem-parsing permintaan JSON
 app.use(express.json());
 
-// root
+// route root
 app.get('/', (req, res) => {
   res.send('you are connected!!');
 });
@@ -21,7 +21,7 @@ app.get('/', (req, res) => {
 const authRoutes = require('./api/auth/authRoutes');
 const userRoutes = require('./api/users/userRoutes');
 
-// Use Routes
+// menggunakan rute-rute yang diimpor
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 
@@ -32,6 +32,6 @@ app.get('/protected', verifyToken, (req, res) => {
   });
 });
 
-// Start the server
+// memulai server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
