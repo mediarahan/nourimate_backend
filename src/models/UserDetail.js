@@ -1,6 +1,7 @@
 const db = require('../config/db');
 
 class UserDetail {
+  // mendapatkan detail pengguna berdasarkan ID pengguna
   static getUserDetails(userId) {
     return db.execute(
       'SELECT UserDetail.*, User.emailVerified, User.phoneVerified FROM UserDetail JOIN User ON UserDetail.user_id = ?',
@@ -8,6 +9,7 @@ class UserDetail {
     );
   }
 
+  // memperbarui detail pengguna dengan nilai-nilai baru
   static updateUserDetails(
     detailId,
     dob,
@@ -24,6 +26,7 @@ class UserDetail {
     );
   }
 
+  // menghapus detail pengguna dan pengguna terkait berdasarkan ID pengguna
   static deleteUserDetails(userId) {
     return db
       .execute('DELETE FROM UserDetail WHERE user_id = ?', [userId])

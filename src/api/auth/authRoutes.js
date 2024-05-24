@@ -2,10 +2,10 @@ const express = require('express');
 const authController = require('./authController');
 const router = express.Router();
 
-// POST /api/auth/signup (register a new user)
+// POST /api/auth/signup (registrasi pengguna baru)
 router.post('/signup', authController.registerUser);
 
-// POST /api/auth/signin (login a user)
+// POST /api/auth/signin (masuk pengguna)
 router.post('/signin', authController.loginUser);
 
 // POST /api/auth/send-email-verification

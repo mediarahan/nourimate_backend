@@ -3,6 +3,7 @@ const db = require('../config/db');
 const bcrypt = require('bcryptjs');
 
 class Auth {
+  // mendaftarkan pengguna baru
   static async registerUser(name, email, password, phoneNumber) {
     const hashedPassword = await bcrypt.hash(password, 10);
     const connection = await db.getConnection();
@@ -17,7 +18,6 @@ class Auth {
 
       const userId = userResult.insertId;
 
-      // Insert an empty UserDetail for this new user
       await connection.execute('INSERT INTO UserDetail (user_id) VALUES (?)', [
         userId,
       ]);
@@ -32,6 +32,7 @@ class Auth {
     }
   }
 
+  // memeriksa apakah email dan password yang diberikan cocok dengan database
   static async loginUser(email, password) {
     const [users] = await db.execute(
       'SELECT user_id, password FROM User WHERE email = ?',
@@ -52,6 +53,7 @@ class Auth {
     return user;
   }
 
+  // memperbarui access token dan refresh token untuk pengguna dengan ID tertentu
   static async updateTokens(userId, accessToken, refreshToken) {
     const connection = await db.getConnection();
     try {
@@ -66,6 +68,7 @@ class Auth {
     }
   }
 
+  // memperbarui token email untuk pengguna dengan ID tertentu
   static async updateEmailToken(userId, emailToken) {
     const query = 'UPDATE User SET emailToken = ? WHERE user_id = ?';
     try {
@@ -77,6 +80,7 @@ class Auth {
     }
   }
 
+  // memverifikasi token email untuk pengguna dengan ID tertentu
   static async verifyEmailToken(userId) {
     const query = 'SELECT emailToken FROM User WHERE user_id = ?';
     try {
@@ -88,6 +92,7 @@ class Auth {
     }
   }
 
+  // memperbarui status verifikasi email untuk pengguna dengan ID tertentu
   static async updateEmailVerified(userId) {
     const query = 'UPDATE User SET emailVerified = TRUE WHERE user_id = ?';
     try {
@@ -99,6 +104,7 @@ class Auth {
     }
   }
 
+  // memperbarui token SMS untuk pengguna dengan ID tertentu
   static async updateSmsToken(userId, smsToken) {
     const query = 'UPDATE User SET smsToken = ? WHERE user_id = ?';
     try {
@@ -110,6 +116,7 @@ class Auth {
     }
   }
 
+  // memverifikasi token SMS untuk pengguna dengan ID tertentu
   static async verifySmsToken(userId) {
     const query = 'SELECT smsToken FROM User WHERE user_id = ?';
     try {
@@ -121,6 +128,7 @@ class Auth {
     }
   }
 
+  // memperbarui status verifikasi nomor telepon untuk pengguna dengan ID tertentu
   static async updatePhoneVerified(userId) {
     const query = 'UPDATE User SET phoneVerified = TRUE WHERE user_id = ?';
     try {
@@ -132,6 +140,7 @@ class Auth {
     }
   }
 
+  // memperbarui pengguna Google dengan ID Google, nama, dan nomor telepon yang diberikan
   static async updateGoogleUser(uid, name, phoneNumber) {
     const query = `
     INSERT INTO User (name, email, phoneNumber)
