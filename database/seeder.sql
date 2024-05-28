@@ -9,8 +9,7 @@ CREATE TABLE User (
     refreshToken VARCHAR(255),
     emailToken VARCHAR(255),
     smsToken VARCHAR(255),
-    emailVerified BOOLEAN DEFAULT FALSE,
-    phoneVerified BOOLEAN DEFAULT FALSE
+    is_verified BOOLEAN DEFAULT FALSE
 );
 
 CREATE TABLE UserDetail (
@@ -23,5 +22,6 @@ CREATE TABLE UserDetail (
     allergen VARCHAR(255),
     disease VARCHAR(255),
     user_id INT,
+    isDetailFilled BOOLEAN DEFAULT FALSE,
     FOREIGN KEY (user_id) REFERENCES User(user_id)
 );

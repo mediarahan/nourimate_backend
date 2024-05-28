@@ -18,6 +18,7 @@ class Auth {
 
       const userId = userResult.insertId;
 
+      // Insert an empty UserDetail for this new user
       await connection.execute('INSERT INTO UserDetail (user_id) VALUES (?)', [
         userId,
       ]);
@@ -35,7 +36,7 @@ class Auth {
   // memeriksa apakah email dan password yang diberikan cocok dengan database
   static async loginUser(email, password) {
     const [users] = await db.execute(
-      'SELECT user_id, password FROM User WHERE email = ?',
+      'SELECT u.user_id, u.is_verified, ud.isDetailFilled, u.password FROM User u JOIN UserDetail ud ON u.user_id = ud.user_id WHERE u.email = ?',
       [email],
     );
 
@@ -94,7 +95,7 @@ class Auth {
 
   // memperbarui status verifikasi email untuk pengguna dengan ID tertentu
   static async updateEmailVerified(userId) {
-    const query = 'UPDATE User SET emailVerified = TRUE WHERE user_id = ?';
+    const query = 'UPDATE User SET is_verified = TRUE WHERE user_id = ?';
     try {
       const [result] = await db.query(query, [userId]);
       return result;
@@ -130,7 +131,7 @@ class Auth {
 
   // memperbarui status verifikasi nomor telepon untuk pengguna dengan ID tertentu
   static async updatePhoneVerified(userId) {
-    const query = 'UPDATE User SET phoneVerified = TRUE WHERE user_id = ?';
+    const query = 'UPDATE User SET is_verified = TRUE WHERE user_id = ?';
     try {
       const [result] = await db.query(query, [userId]);
       return result;

@@ -34,7 +34,7 @@ admin.initializeApp({
 });
 
 // untuk mendaftarkan pengguna baru
-exports.registerUser = async (req, res) => {
+exports.signupUser = async (req, res) => {
   const {name, email, password, phoneNumber} = req.body;
 
   try {
@@ -59,7 +59,7 @@ exports.registerUser = async (req, res) => {
 };
 
 // untuk login pengguna
-exports.loginUser = async (req, res) => {
+exports.signinUser = async (req, res) => {
   const {email, password} = req.body;
 
   try {
@@ -76,10 +76,17 @@ exports.loginUser = async (req, res) => {
     // meyimpan token baru dalam database
     await Auth.updateTokens(user.user_id, accessToken, refreshToken);
 
+    // clg
+    // console.log('user', user); remove password from user object
+    delete user.password;
+
+    console.log('user', user);
+
     // menanggapi token
     res.json({
       accessToken,
       refreshToken,
+      user,
     });
   } catch (err) {
     res.status(401).json({
