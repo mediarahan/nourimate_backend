@@ -1,15 +1,13 @@
 const db = require('../config/db');
 
 class UserDetail {
-  // mendapatkan detail pengguna berdasarkan ID pengguna
   static getUserDetails(userId) {
     return db.execute(
-      'SELECT UserDetail.*, User.emailVerified, User.phoneVerified FROM UserDetail JOIN User ON UserDetail.user_id = ?',
+      'SELECT UserDetail.*, User.* FROM UserDetail JOIN User ON UserDetail.user_id = ?',
       [userId],
     );
   }
 
-  // memperbarui detail pengguna dengan nilai-nilai baru
   static updateUserDetails(
     userId,
     dob,
@@ -19,13 +17,22 @@ class UserDetail {
     gender,
     allergen,
     disease,
+    age,
   ) {
-    const isDetailFilled =
-      dob && height && waistSize && weight && gender && allergen && disease;
+    const isDetailFilled = !!(
+      dob &&
+      height &&
+      waistSize &&
+      weight &&
+      gender &&
+      allergen &&
+      disease &&
+      age
+    );
 
     const query = `
     UPDATE UserDetail 
-    SET dob = ?, height = ?, waistSize = ?, weight = ?, gender = ?, allergen = ?, disease = ?, isDetailFilled = ?
+    SET dob = ?, height = ?, waistSize = ?, weight = ?, gender = ?, allergen = ?, disease = ?, age = ?, isDetailFilled = ?
     WHERE user_id = ?
   `;
     const params = [
@@ -36,13 +43,13 @@ class UserDetail {
       gender,
       allergen,
       disease,
+      age,
       isDetailFilled,
       userId,
     ];
     return db.execute(query, params);
   }
 
-  // menghapus detail pengguna dan pengguna terkait berdasarkan ID pengguna
   static deleteUserDetails(userId) {
     return db
       .execute('DELETE FROM UserDetail WHERE user_id = ?', [userId])

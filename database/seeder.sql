@@ -1,4 +1,9 @@
--- Structure
+-- Drop existing tables if they exist
+DROP TABLE IF EXISTS UserProgram;
+DROP TABLE IF EXISTS UserDetail;
+DROP TABLE IF EXISTS User;
+
+-- Create User table
 CREATE TABLE User (
     user_id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255),
@@ -12,6 +17,7 @@ CREATE TABLE User (
     is_verified BOOLEAN DEFAULT FALSE
 );
 
+-- Create UserDetail table
 CREATE TABLE UserDetail (
     detail_id INT AUTO_INCREMENT PRIMARY KEY,
     dob DATE,
@@ -22,6 +28,22 @@ CREATE TABLE UserDetail (
     allergen VARCHAR(255),
     disease VARCHAR(255),
     user_id INT,
+    bmi FLOAT,
+    idealWeight INT,
+    age INT DEFAULT 0,
     isDetailFilled BOOLEAN DEFAULT FALSE,
+    FOREIGN KEY (user_id) REFERENCES User(user_id)
+);
+
+-- Create UserProgram table
+CREATE TABLE UserProgram (
+    program_id INT AUTO_INCREMENT PRIMARY KEY,
+    ongoingProgram INT NOT NULL DEFAULT 0,
+    startDate DATE,
+    endDate DATE,
+    startWeight INT,
+    endWeight INT,
+    editCurrentWeightDate DATE NOT NULL,
+    user_id INT NOT NULL,
     FOREIGN KEY (user_id) REFERENCES User(user_id)
 );

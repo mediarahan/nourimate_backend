@@ -1,14 +1,14 @@
 const jwt = require('jsonwebtoken');
 const Auth = require('../../models/Auth');
 const dotenv = require('dotenv');
-const nodemailer = require('nodemailer');
 const admin = require('firebase-admin');
 const serviceAccount = require('../../config/service-account-file.json');
+const bcrypt = require('bcryptjs');
 
-// Memuat variabel
+// Load environment variables
 dotenv.config();
 
-// Mengganti dengan kunci rahasia JWT
+// Replace with your JWT secret key
 const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret_key';
 
 // twilio
@@ -17,28 +17,26 @@ const client = require('twilio')(
   process.env.TWILIO_AUTH_TOKEN,
 );
 
-// verifikasi email
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  host: 'smtp.gmail.com',
-  port: 465,
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-});
-
 // google auth mobile
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
 });
 
-// untuk mendaftarkan pengguna baru
 exports.signupUser = async (req, res) => {
   const {name, email, password, phoneNumber} = req.body;
 
+  let firebaseUser;
+
   try {
-    // memanggil metode registerUser dari model Auth untuk mendaftarkan pengguna baru
+    // Create user in Firebase
+    firebaseUser = await admin.auth().createUser({
+      email: email,
+      password: password,
+      displayName: name,
+      disabled: false,
+    });
+
+    // store in local database
     const {userId} = await Auth.registerUser(
       name,
       email,
@@ -49,40 +47,64 @@ exports.signupUser = async (req, res) => {
     res.status(201).json({
       message: 'User registered successfully',
       userId,
+      firebaseUid: firebaseUser.uid,
     });
   } catch (err) {
+    // If there's an error creating the user in the local database, delete the Firebase user
+    if (firebaseUser) {
+      await admin.auth().deleteUser(firebaseUser.uid);
+    }
+
     res.status(500).json({
       error: 'Error registering user',
-      details: err.message,
+      details: err.message + 'from' + err.stack,
     });
   }
 };
 
-// untuk login pengguna
+exports.changePassword = async (req, res) => {
+  const {user_id, password} = req.body;
+
+  try {
+    const hashedPassword = await bcrypt.hash(password, 10);
+    await Auth.updatePassword(user_id, hashedPassword);
+    res.status(200).json({message: 'Password updated successfully'});
+  } catch (error) {
+    res.status(500).json({message: 'Error updating password'});
+  }
+};
+
+exports.changePhoneNumber = async (req, res) => {
+  const {user_id, phoneNumber} = req.body;
+  try {
+    await Auth.updatePhoneNumber(user_id, phoneNumber);
+    res.status(200).json({message: 'Phone number updated successfully'});
+  } catch (error) {
+    res.status(500).json({message: 'Error updating phone number'});
+  }
+};
+
 exports.signinUser = async (req, res) => {
   const {email, password} = req.body;
 
   try {
     const user = await Auth.loginUser(email, password);
 
-    // membuat access token JWT dan refresh token
+    // Generate JWT access token and refresh token
     const accessToken = jwt.sign({userId: user.user_id}, JWT_SECRET, {
-      expiresIn: '1h',
+      expiresIn: '1d',
     });
     const refreshToken = jwt.sign({userId: user.user_id}, JWT_SECRET, {
       expiresIn: '7d',
     });
 
-    // meyimpan token baru dalam database
+    // Store the new tokens in the database
     await Auth.updateTokens(user.user_id, accessToken, refreshToken);
 
-    // clg
-    // console.log('user', user); remove password from user object
+    // return user data without password
     delete user.password;
 
-    console.log('user', user);
-
-    // menanggapi token
+    // Respond with tokens
     res.json({
       accessToken,
       refreshToken,
@@ -96,35 +118,140 @@ exports.signinUser = async (req, res) => {
   }
 };
 
-// untuk mengirim email verifikasi
-exports.sendEmailVerification = async (req, res) => {
-  const {userId, email} = req.body;
-  const emailToken = Math.floor(100000 + Math.random() * 900000);
+exports.requestPasswordReset = async (req, res) => {
+  const {email} = req.body;
 
   try {
-    await Auth.updateEmailToken(userId, emailToken);
-    const mailOptions = {
-      from: process.env.EMAIL_USER,
-      to: email,
-      subject: 'Email Verification',
-      text: `Your verification code is: ${emailToken}`,
-    };
+    const user = await Auth.findUserByEmail(email);
+    if (!user) {
+      return res.status(404).send('No user found with that email address.');
+    }
 
-    transporter.sendMail(mailOptions, (error, info) => {
-      if (error) {
-        console.log(error);
-        res.status(500).send('Error sending email');
-      } else {
-        console.log('Email sent: ' + info.response);
-        res.status(200).send('Verification email sent');
-      }
+    const accessToken = jwt.sign({userId: user.user_id}, JWT_SECRET, {
+      expiresIn: '1d',
     });
+    const refreshToken = jwt.sign({userId: user.user_id}, JWT_SECRET, {
+      expiresIn: '7d',
+    });
+
+    await Auth.updateTokens(user.user_id, accessToken, refreshToken);
+
+    // send the password reset link via email
+    const resetLink = `http://localhost:3000/reset-password?token=${accessToken}`;
+    await admin
+      .firestore()
+      .collection('mail')
+      .add({
+        to: email,
+        message: {
+          from: `Your App <no-reply@your-app.com>`,
+          subject: 'Password Reset Link',
+          html: `
+          <p>Click <a href="${resetLink}">here</a> to reset your password.</p>
+          <p>${accessToken}</p>
+          `,
+        },
+      });
+
+    res.send('Reset password link has been sent to your email.');
   } catch (error) {
-    res.status(500).send(error);
+    res.status(500).send('Error on the server.');
   }
 };
 
-// untuk memverifikasi email
+exports.verifyResetPasswordToken = async (req, res) => {
+  const {token} = req.params;
+  const {email, password} = req.body;
+
+  try {
+    // First, verify the token's validity using JWT to ensure it's correctly structured and signed
+    const decoded = jwt.verify(token, JWT_SECRET);
+    if (!decoded) {
+      return res.status(401).send('Invalid token format.');
+    }
+
+    // Check if the email and token match the ones in the database
+    const user = await Auth.verifyUserToken(email, token);
+    if (!user) {
+      return res.status(401).send('Invalid or expired reset token.');
+    }
+
+    // Hash the new password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Update the user's password in the database
+    await Auth.updatePassword(decoded.userId, hashedPassword);
+
+    res.send(
+      'Your password has been successfully reset. You can now log in with the new password.',
+    );
+  } catch (error) {
+    if (error.name === 'TokenExpiredError') {
+      return res.status(401).send('Reset token has expired.');
+    }
+    res.status(500).send('Error processing your request.');
+  }
+};
+
+exports.validateToken = async (req, res) => {
+  const {token} = req.params;
+
+  try {
+    // Verify the token's validity using JWT
+    jwt.verify(token, JWT_SECRET);
+
+    // Check if the token exists in the database and matches an active session
+    const tokenDetails = await Auth.getTokenDetails(token);
+    if (!tokenDetails) {
+      res.json({valid: false});
+    } else {
+      res.json({valid: true});
+    }
+  } catch (error) {
+    if (
+      error.name === 'JsonWebTokenError' ||
+      error.name === 'TokenExpiredError'
+    ) {
+      res.json({valid: false});
+    } else {
+      res.status(500).send('Error processing your request.');
+    }
+  }
+};
+
+exports.sendEmailVerification = async (req, res) => {
+  const {userId, email} = req.body;
+
+  try {
+    // Generate a 6-digit token
+    const token = Math.floor(100000 + Math.random() * 900000);
+
+    // Store the token in the local database with a userId reference
+    await Auth.updateEmailToken(userId, token);
+
+    // Send the token via email using Firebase's SMTP configuration
+    await admin
+      .firestore()
+      .collection('mail')
+      .add({
+        to: email,
+        message: {
+          from: `Your App <no-reply@your-app.com>`,
+          subject: `Your Verification Code: ${token}`,
+          html: `<p>Your verification code is ${token}</p>`,
+        },
+      })
+      .then(() => console.log('Queued email for delivery!'));
+
+    res.status(200).send({
+      message: 'Verification email sent',
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Error sending email');
+  }
+};
+
 exports.verifyEmail = async (req, res) => {
   const {userId, emailToken} = req.body;
 
@@ -141,7 +268,6 @@ exports.verifyEmail = async (req, res) => {
   }
 };
 
-// untuk mengirim verifikasi nomor telepon
 exports.sendPhoneVerification = async (req, res) => {
   const {userId, phoneNumber} = req.body;
   const smsToken = Math.floor(100000 + Math.random() * 900000);
@@ -170,7 +296,6 @@ exports.sendPhoneVerification = async (req, res) => {
   }
 };
 
-// untuk memverifikasi nomor telepon
 exports.verifyPhone = async (req, res) => {
   const {userId, smsToken} = req.body;
 
@@ -187,7 +312,6 @@ exports.verifyPhone = async (req, res) => {
   }
 };
 
-// untuk memverifikasi token google
 exports.googleVerifyToken = async (req, res) => {
   const {id_token} = req.body;
   try {
@@ -203,7 +327,6 @@ exports.googleVerifyToken = async (req, res) => {
   }
 };
 
-// untuk refresh token
 exports.refreshToken = async (req, res) => {
   const {uid} = req.body;
   try {
@@ -224,7 +347,6 @@ exports.refreshToken = async (req, res) => {
   }
 };
 
-// untuk memperbarui pengguna google
 exports.googleUpdateUser = async (req, res) => {
   const {uid, name, phoneNumber} = req.body;
   try {

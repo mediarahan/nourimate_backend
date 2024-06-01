@@ -3,7 +3,6 @@ const db = require('../config/db');
 const bcrypt = require('bcryptjs');
 
 class Auth {
-  // mendaftarkan pengguna baru
   static async registerUser(name, email, password, phoneNumber) {
     const hashedPassword = await bcrypt.hash(password, 10);
     const connection = await db.getConnection();
@@ -33,7 +32,6 @@ class Auth {
     }
   }
 
-  // memeriksa apakah email dan password yang diberikan cocok dengan database
   static async loginUser(email, password) {
     const [users] = await db.execute(
       'SELECT u.user_id, u.is_verified, ud.isDetailFilled, u.password FROM User u JOIN UserDetail ud ON u.user_id = ud.user_id WHERE u.email = ?',
@@ -54,7 +52,62 @@ class Auth {
     return user;
   }
 
-  // memperbarui access token dan refresh token untuk pengguna dengan ID tertentu
+  static async findUserByEmail(email) {
+    const [users] = await db.execute('SELECT * FROM User WHERE email = ?', [
+      email,
+    ]);
+
+    if (users.length === 0) {
+      return null;
+    }
+
+    return users[0];
+  }
+
+  static async verifyUserToken(email, token) {
+    const [users] = await db.execute(
+      'SELECT user_id FROM User WHERE email = ? AND (refreshToken = ? OR accessToken = ?)',
+      [email, token, token],
+    );
+    return users.length > 0;
+  }
+
+  static async getTokenDetails(token) {
+    const [users] = await db.execute(
+      'SELECT user_id, accessToken, refreshToken FROM User WHERE refreshToken = ? OR accessToken = ?',
+      [token, token],
+    );
+    return users[0];
+  }
+
+  static async updatePassword(userId, password) {
+    const connection = await db.getConnection();
+    try {
+      await connection.execute(
+        'UPDATE User SET password = ? WHERE user_id = ?',
+        [password, userId],
+      );
+    } catch (error) {
+      throw new Error(`Error updating password: ${error.message}`);
+    } finally {
+      connection.release();
+    }
+  }
+
+  static async updatePhoneNumber(userId, phoneNumber) {
+    const connection = await db.getConnection();
+    try {
+      await connection.execute(
+        'UPDATE User SET phoneNumber = ? WHERE user_id = ?',
+        [phoneNumber, userId],
+      );
+    } catch (error) {
+      throw new Error(`Error updating phone number: ${error.message}`);
+    } finally {
+      connection.release();
+    }
+  }
+
   static async updateTokens(userId, accessToken, refreshToken) {
     const connection = await db.getConnection();
     try {
@@ -69,7 +122,6 @@ class Auth {
     }
   }
 
-  // memperbarui token email untuk pengguna dengan ID tertentu
   static async updateEmailToken(userId, emailToken) {
     const query = 'UPDATE User SET emailToken = ? WHERE user_id = ?';
     try {
@@ -81,7 +133,6 @@ class Auth {
     }
   }
 
-  // memverifikasi token email untuk pengguna dengan ID tertentu
   static async verifyEmailToken(userId) {
     const query = 'SELECT emailToken FROM User WHERE user_id = ?';
     try {
@@ -93,7 +144,6 @@ class Auth {
     }
   }
 
-  // memperbarui status verifikasi email untuk pengguna dengan ID tertentu
   static async updateEmailVerified(userId) {
     const query = 'UPDATE User SET is_verified = TRUE WHERE user_id = ?';
     try {
@@ -105,7 +155,6 @@ class Auth {
     }
   }
 
-  // memperbarui token SMS untuk pengguna dengan ID tertentu
   static async updateSmsToken(userId, smsToken) {
     const query = 'UPDATE User SET smsToken = ? WHERE user_id = ?';
     try {
@@ -117,7 +166,6 @@ class Auth {
     }
   }
 
-  // memverifikasi token SMS untuk pengguna dengan ID tertentu
   static async verifySmsToken(userId) {
     const query = 'SELECT smsToken FROM User WHERE user_id = ?';
     try {
@@ -129,7 +177,6 @@ class Auth {
     }
   }
 
-  // memperbarui status verifikasi nomor telepon untuk pengguna dengan ID tertentu
   static async updatePhoneVerified(userId) {
     const query = 'UPDATE User SET is_verified = TRUE WHERE user_id = ?';
     try {
@@ -141,7 +188,6 @@ class Auth {
     }
   }
 
-  // memperbarui pengguna Google dengan ID Google, nama, dan nomor telepon yang diberikan
   static async updateGoogleUser(uid, name, phoneNumber) {
     const query = `
     INSERT INTO User (name, email, phoneNumber)

@@ -1,12 +1,40 @@
 const express = require('express');
 const authController = require('./authController');
+const authMiddleware = require('./authMiddleware');
 const router = express.Router();
 
-// POST /api/auth/signup (registrasi pengguna baru)
-router.post('/signup', authController.signupUser);
+// POST /api/auth/signup (register a new user)
+router.post(
+  '/signup',
+  authMiddleware.validatePassword,
+  authController.signupUser,
+);
 
-// POST /api/auth/signin (masuk pengguna)
+// POST /api/auth/signin (login a user)
 router.post('/signin', authController.signinUser);
+
+// POST /api/auth/forgot-password
+router.post('/forgot-password', authController.requestPasswordReset);
+
+// POST /api/auth/reset-password/:token
+router.post(
+  '/reset-password/:token',
+  authMiddleware.validatePassword,
+  authController.verifyResetPasswordToken,
+);
+
+// GET /validate-token/:token
+router.get('/validate-token/:token', authController.validateToken);
+
+// POST /api/auth/change-password
+router.post(
+  '/change-password',
+  authMiddleware.validatePassword,
+  authController.changePassword,
+);
+
+// POST /api/auth/change-phone-number
+router.post('/change-phone-number', authController.changePhoneNumber);
 
 // POST /api/auth/send-email-verification
 router.post('/send-email-verification', authController.sendEmailVerification);

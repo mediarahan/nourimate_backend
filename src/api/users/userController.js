@@ -18,6 +18,10 @@ exports.getUserDetails = async (req, res) => {
 exports.updateUserDetails = async (req, res) => {
   const userId = req.params.userId;
   const {dob, height, waistSize, weight, gender, allergen, disease} = req.body;
+
+  // Calculate age from dob and store it in the database
+  const age = new Date().getFullYear() - new Date(dob).getFullYear();
+
   try {
     await UserDetail.updateUserDetails(
       userId,
@@ -28,6 +32,7 @@ exports.updateUserDetails = async (req, res) => {
       gender,
       allergen,
       disease,
+      age,
     );
     res.send({message: 'User details updated successfully'});
   } catch (error) {
