@@ -3,14 +3,16 @@ const authController = require('./authController');
 const authMiddleware = require('./authMiddleware');
 const router = express.Router();
 
-// POST /api/auth/signup (register a new user)
+// POST /api/auth/signup (daftar pengguna baru)
 router.post(
   '/signup',
+  // Middleware untuk memvalidasi password sebelum melanjutkan
   authMiddleware.validatePassword,
+  // Controller untuk mendaftarkan pengguna baru
   authController.signupUser,
 );
 
-// POST /api/auth/signin (login a user)
+// POST /api/auth/signin (login pengguna)
 router.post('/signin', authController.signinUser);
 
 // POST /api/auth/forgot-password
@@ -19,7 +21,9 @@ router.post('/forgot-password', authController.requestPasswordReset);
 // POST /api/auth/reset-password/:token
 router.post(
   '/reset-password/:token',
+  // Middleware untuk memvalidasi password baru sebelum melanjutkan
   authMiddleware.validatePassword,
+  // Controller untuk memverifikasi token reset password dan memperbarui password
   authController.verifyResetPasswordToken,
 );
 
@@ -29,7 +33,9 @@ router.get('/validate-token/:token', authController.validateToken);
 // POST /api/auth/change-password
 router.post(
   '/change-password',
+  // Middleware untuk memvalidasi password baru sebelum melanjutkan
   authMiddleware.validatePassword,
+  // Controller untuk mengubah password pengguna
   authController.changePassword,
 );
 

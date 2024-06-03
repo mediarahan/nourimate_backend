@@ -1,5 +1,7 @@
+// Mengimpor model UserDetail yang digunakan untuk berinteraksi dengan database terkait detail pengguna
 const UserDetail = require('../../models/UserDetail');
 
+// Fungsi digunakan untuk mengambil detail pengguna berdasarkan `userId`
 exports.getUserDetails = async (req, res) => {
   const userId = req.params.userId;
   try {
@@ -15,11 +17,12 @@ exports.getUserDetails = async (req, res) => {
   }
 };
 
+// Fungsi digunakan untuk memperbarui detail pengguna berdasarkan `userId`
 exports.updateUserDetails = async (req, res) => {
   const userId = req.params.userId;
   const {dob, height, waistSize, weight, gender, allergen, disease} = req.body;
 
-  // Calculate age from dob and store it in the database
+  // Umur dihitung dari tanggal lahir (`dob`) dan disimpan dalam database
   const age = new Date().getFullYear() - new Date(dob).getFullYear();
 
   try {
@@ -34,6 +37,7 @@ exports.updateUserDetails = async (req, res) => {
       disease,
       age,
     );
+    // Memperbarui detail pengguna dalam database
     res.send({message: 'User details updated successfully'});
   } catch (error) {
     res
@@ -42,6 +46,7 @@ exports.updateUserDetails = async (req, res) => {
   }
 };
 
+// Fungsi digunakan untuk menghapus detail pengguna berdasarkan `userId`
 exports.deleteUserDetails = async (req, res) => {
   const userId = req.params.userId;
   try {

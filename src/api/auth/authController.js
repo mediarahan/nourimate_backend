@@ -5,30 +5,31 @@ const admin = require('firebase-admin');
 const serviceAccount = require('../../config/service-account-file.json');
 const bcrypt = require('bcryptjs');
 
-// Load environment variables
+// Memuat variabel lingkungan dari file .env
 dotenv.config();
 
-// Replace with your JWT secret key
+// Mengganti dengan kunci rahasia JWT
 const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret_key';
 
-// twilio
+// Menginisialisasi Twilio
 const client = require('twilio')(
   process.env.TWILIO_ACCOUNT_SID,
   process.env.TWILIO_AUTH_TOKEN,
 );
 
-// google auth mobile
+// Inisialisasi Firebase Admin SDK untuk autentikasi Google
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
 });
 
+// Fungsi untuk mendaftarkan pengguna baru
 exports.signupUser = async (req, res) => {
   const {name, email, password, phoneNumber} = req.body;
 
   let firebaseUser;
 
   try {
-    // Create user in Firebase
+    // Membuat pengguna di Firebase
     firebaseUser = await admin.auth().createUser({
       email: email,
       password: password,
@@ -36,7 +37,7 @@ exports.signupUser = async (req, res) => {
       disabled: false,
     });
 
-    // store in local database
+    // Menyimpan pengguna di database lokal
     const {userId} = await Auth.registerUser(
       name,
       email,
@@ -50,7 +51,7 @@ exports.signupUser = async (req, res) => {
       firebaseUid: firebaseUser.uid,
     });
   } catch (err) {
-    // If there's an error creating the user in the local database, delete the Firebase user
+    // Jika ada kesalahan saat membuat pengguna di database lokal, hapus pengguna di Firebase
     if (firebaseUser) {
       await admin.auth().deleteUser(firebaseUser.uid);
     }
@@ -62,6 +63,7 @@ exports.signupUser = async (req, res) => {
   }
 };
 
+// Fungsi untuk mengubah kata sandi pengguna
 exports.changePassword = async (req, res) => {
   const {user_id, password} = req.body;
 
@@ -74,6 +76,7 @@ exports.changePassword = async (req, res) => {
   }
 };
 
+// Fungsi untuk mengubah nomor telepon pengguna
 exports.changePhoneNumber = async (req, res) => {
   const {user_id, phoneNumber} = req.body;
   try {
@@ -84,13 +87,14 @@ exports.changePhoneNumber = async (req, res) => {
   }
 };
 
+// Fungsi untuk masuk pengguna
 exports.signinUser = async (req, res) => {
   const {email, password} = req.body;
 
   try {
     const user = await Auth.loginUser(email, password);
 
-    // Generate JWT access token and refresh token
+    // Menghasilkan token akses dan token penyegaran JWT
     const accessToken = jwt.sign({userId: user.user_id}, JWT_SECRET, {
       expiresIn: '1d',
     });
@@ -98,13 +102,13 @@ exports.signinUser = async (req, res) => {
       expiresIn: '7d',
     });
 
-    // Store the new tokens in the database
+    // Menyimpan token baru di database
     await Auth.updateTokens(user.user_id, accessToken, refreshToken);
 
-    // return user data without password
+    // Menghapus kata sandi dari data pengguna yang akan dikembalikan
     delete user.password;
 
-    // Respond with tokens
+    // Mengembalikan token dan data pengguna
     res.json({
       accessToken,
       refreshToken,
@@ -118,6 +122,7 @@ exports.signinUser = async (req, res) => {
   }
 };
 
+//Fungsi untuk meminta pengaturan ulang kata sandi
 exports.requestPasswordReset = async (req, res) => {
   const {email} = req.body;
 
@@ -136,7 +141,7 @@ exports.requestPasswordReset = async (req, res) => {
 
     await Auth.updateTokens(user.user_id, accessToken, refreshToken);
 
-    // send the password reset link via email
+    // Mengirimkan tautan pengaturan ulang kata sandi melalui email
     const resetLink = `http://localhost:3000/reset-password?token=${accessToken}`;
     await admin
       .firestore()
@@ -159,27 +164,28 @@ exports.requestPasswordReset = async (req, res) => {
   }
 };
 
+// Fungsi untuk memverifikasi token pengaturan ulang kata sandi
 exports.verifyResetPasswordToken = async (req, res) => {
   const {token} = req.params;
   const {email, password} = req.body;
 
   try {
-    // First, verify the token's validity using JWT to ensure it's correctly structured and signed
+    // Verifikasi validitas token menggunakan JWT
     const decoded = jwt.verify(token, JWT_SECRET);
     if (!decoded) {
       return res.status(401).send('Invalid token format.');
     }
 
-    // Check if the email and token match the ones in the database
+    // Periksa apakah email dan token sesuai dengan yang ada di database
     const user = await Auth.verifyUserToken(email, token);
     if (!user) {
       return res.status(401).send('Invalid or expired reset token.');
     }
 
-    // Hash the new password
+    // Meng-hash kata sandi baru
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Update the user's password in the database
+    // Memperbarui kata sandi pengguna di database
     await Auth.updatePassword(decoded.userId, hashedPassword);
 
     res.send(
@@ -193,14 +199,15 @@ exports.verifyResetPasswordToken = async (req, res) => {
   }
 };
 
+// Fungsi untuk memvalidasi token
 exports.validateToken = async (req, res) => {
   const {token} = req.params;
 
   try {
-    // Verify the token's validity using JWT
+    // VVerifikasi validitas token menggunakan JWT
     jwt.verify(token, JWT_SECRET);
 
-    // Check if the token exists in the database and matches an active session
+    // Periksa apakah token ada di database dan cocok dengan sesi aktif
     const tokenDetails = await Auth.getTokenDetails(token);
     if (!tokenDetails) {
       res.json({valid: false});
@@ -219,17 +226,18 @@ exports.validateToken = async (req, res) => {
   }
 };
 
+// Fungsi untuk mengirim verifikasi email
 exports.sendEmailVerification = async (req, res) => {
   const {userId, email} = req.body;
 
   try {
-    // Generate a 6-digit token
+    // Menghasilkan token 6-digit
     const token = Math.floor(100000 + Math.random() * 900000);
 
-    // Store the token in the local database with a userId reference
+    // Menyimpan token di database lokal dengan referensi userId
     await Auth.updateEmailToken(userId, token);
 
-    // Send the token via email using Firebase's SMTP configuration
+    // Mengirim token melalui email menggunakan konfigurasi SMTP Firebase
     await admin
       .firestore()
       .collection('mail')
@@ -252,6 +260,7 @@ exports.sendEmailVerification = async (req, res) => {
   }
 };
 
+// Fungsi untuk memverifikasi email
 exports.verifyEmail = async (req, res) => {
   const {userId, emailToken} = req.body;
 
@@ -268,6 +277,7 @@ exports.verifyEmail = async (req, res) => {
   }
 };
 
+// Fungsi untuk mengirim verifikasi nomor telepon
 exports.sendPhoneVerification = async (req, res) => {
   const {userId, phoneNumber} = req.body;
   const smsToken = Math.floor(100000 + Math.random() * 900000);
@@ -296,6 +306,7 @@ exports.sendPhoneVerification = async (req, res) => {
   }
 };
 
+// Fungsi untuk memverifikasi nomor telepon
 exports.verifyPhone = async (req, res) => {
   const {userId, smsToken} = req.body;
 
@@ -312,6 +323,7 @@ exports.verifyPhone = async (req, res) => {
   }
 };
 
+// Fungsi untuk mengirim token verifikasi ID google
 exports.googleVerifyToken = async (req, res) => {
   const {id_token} = req.body;
   try {
@@ -327,6 +339,7 @@ exports.googleVerifyToken = async (req, res) => {
   }
 };
 
+// Fungsi untuk membuat token kustom baru untuk pengguna
 exports.refreshToken = async (req, res) => {
   const {uid} = req.body;
   try {
@@ -347,6 +360,7 @@ exports.refreshToken = async (req, res) => {
   }
 };
 
+// Fungsi untuk mengupdate informasi pengguna google di database lokal
 exports.googleUpdateUser = async (req, res) => {
   const {uid, name, phoneNumber} = req.body;
   try {

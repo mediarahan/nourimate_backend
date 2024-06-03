@@ -3,11 +3,15 @@ const db = require('../config/db');
 const bcrypt = require('bcryptjs');
 
 class Auth {
+  // Metode registerUser untuk mendaftarkan pengguna baru
   static async registerUser(name, email, password, phoneNumber) {
+    // Menggunakan bcrypt untuk mengenkripsi password sebelum disimpan ke database
     const hashedPassword = await bcrypt.hash(password, 10);
+    // Mendapatkan koneksi dari pool koneksi database
     const connection = await db.getConnection();
 
     try {
+      // Memulai transaksi database
       await connection.beginTransaction();
 
       const [userResult] = await connection.execute(
@@ -17,7 +21,7 @@ class Auth {
 
       const userId = userResult.insertId;
 
-      // Insert an empty UserDetail for this new user
+      // Memasukkan UserDetail kosong untuk pengguna baru ini
       await connection.execute('INSERT INTO UserDetail (user_id) VALUES (?)', [
         userId,
       ]);
@@ -32,6 +36,7 @@ class Auth {
     }
   }
 
+  // Metode loginUser untuk memverifikasi kredensial pengguna
   static async loginUser(email, password) {
     const [users] = await db.execute(
       'SELECT u.user_id, u.is_verified, ud.isDetailFilled, u.password FROM User u JOIN UserDetail ud ON u.user_id = ud.user_id WHERE u.email = ?',
@@ -52,6 +57,7 @@ class Auth {
     return user;
   }
 
+  // Metode findUserByEmail untuk mencari pengguna berdasarkan email
   static async findUserByEmail(email) {
     const [users] = await db.execute('SELECT * FROM User WHERE email = ?', [
       email,
@@ -64,6 +70,7 @@ class Auth {
     return users[0];
   }
 
+  // Metode verifyUserToken untuk memverifikasi token pengguna
   static async verifyUserToken(email, token) {
     const [users] = await db.execute(
       'SELECT user_id FROM User WHERE email = ? AND (refreshToken = ? OR accessToken = ?)',
@@ -72,6 +79,7 @@ class Auth {
     return users.length > 0;
   }
 
+  // Metode getTokenDetails untuk mendapatkan detail token
   static async getTokenDetails(token) {
     const [users] = await db.execute(
       'SELECT user_id, accessToken, refreshToken FROM User WHERE refreshToken = ? OR accessToken = ?',
@@ -80,6 +88,7 @@ class Auth {
     return users[0];
   }
 
+  // Metode updatePassword untuk memperbarui password pengguna
   static async updatePassword(userId, password) {
     const connection = await db.getConnection();
     try {
@@ -94,6 +103,7 @@ class Auth {
     }
   }
 
+  // Metode updatePhoneNumber untuk memperbarui nomor telepon pengguna
   static async updatePhoneNumber(userId, phoneNumber) {
     const connection = await db.getConnection();
     try {
@@ -108,6 +118,8 @@ class Auth {
     }
   }
 
+
+  // Metode updateTokens untuk memperbarui token akses dan refresh pengguna
   static async updateTokens(userId, accessToken, refreshToken) {
     const connection = await db.getConnection();
     try {
@@ -122,6 +134,7 @@ class Auth {
     }
   }
 
+  // Metode updateEmailToken untuk memperbarui token email pengguna
   static async updateEmailToken(userId, emailToken) {
     const query = 'UPDATE User SET emailToken = ? WHERE user_id = ?';
     try {
@@ -133,6 +146,7 @@ class Auth {
     }
   }
 
+  // Metode verifyEmailToken untuk memverifikasi token email pengguna
   static async verifyEmailToken(userId) {
     const query = 'SELECT emailToken FROM User WHERE user_id = ?';
     try {
@@ -144,6 +158,7 @@ class Auth {
     }
   }
 
+  // Metode updateEmailVerified untuk memperbarui status verifikasi email pengguna
   static async updateEmailVerified(userId) {
     const query = 'UPDATE User SET is_verified = TRUE WHERE user_id = ?';
     try {
@@ -155,6 +170,7 @@ class Auth {
     }
   }
 
+  // Metode updateSmsToken untuk memperbarui token SMS pengguna
   static async updateSmsToken(userId, smsToken) {
     const query = 'UPDATE User SET smsToken = ? WHERE user_id = ?';
     try {
@@ -166,6 +182,7 @@ class Auth {
     }
   }
 
+  // Metode verifySmsToken untuk memperbarui status verifikasi token SMS pengguna
   static async verifySmsToken(userId) {
     const query = 'SELECT smsToken FROM User WHERE user_id = ?';
     try {
@@ -177,6 +194,7 @@ class Auth {
     }
   }
 
+  // Metode updatePhoneVerified untuk memperbarui nomor telepon pengguna
   static async updatePhoneVerified(userId) {
     const query = 'UPDATE User SET is_verified = TRUE WHERE user_id = ?';
     try {
@@ -188,6 +206,7 @@ class Auth {
     }
   }
 
+  // Metode updateGoogleUser untuk memperbarui google pengguna
   static async updateGoogleUser(uid, name, phoneNumber) {
     const query = `
     INSERT INTO User (name, email, phoneNumber)

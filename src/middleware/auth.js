@@ -1,9 +1,10 @@
 const jwt = require('jsonwebtoken');
 const dotenv = require('dotenv');
 
-// Load environment variables
+// Memuat variabel lingkungan
 dotenv.config();
 
+// Mendefinisikan fungsi middleware verifyToken
 const verifyToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
@@ -13,6 +14,7 @@ const verifyToken = (req, res, next) => {
   }
 
   try {
+    // Memverifikasi token menggunakan jwt.verify dengan kunci rahasia JWT yang diambil dari variabel lingkungan (process.env.JWT_SECRET)
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.user = decoded;
     next();
@@ -21,4 +23,5 @@ const verifyToken = (req, res, next) => {
   }
 };
 
+// Mengekspor fungsi middleware verifyToken
 module.exports = verifyToken;
