@@ -1,6 +1,5 @@
 const db = require('../config/db');
 
-// Metode getUserDetails untuk mendapatkan detail pengguna berdasarkan userId
 class UserDetail {
   static getUserDetails(userId) {
     return db.execute(
@@ -9,7 +8,6 @@ class UserDetail {
     );
   }
 
-  // Metode updateUserDetails untuk memperbarui detail pengguna berdasarkan userId
   static updateUserDetails(
     userId,
     dob,
@@ -32,12 +30,17 @@ class UserDetail {
       age
     );
 
-    // Menjalankan query untuk memperbarui detail pengguna di tabel UserDetail berdasarkan userId
     const query = `
     UPDATE UserDetail 
-    SET dob = ?, height = ?, waistSize = ?, weight = ?, gender = ?, allergen = ?, disease = ?, age = ?, isDetailFilled = ?
+    SET dob = ?, height = ?, waistSize = ?, weight = ?, gender = ?, allergen = ?, disease = ?, age = ?
     WHERE user_id = ?
   `;
+
+    db.execute('UPDATE User SET isDetailFilled = ? WHERE user_id = ?', [
+      isDetailFilled,
+      userId,
+    ]);
+
     const params = [
       dob,
       height,
@@ -53,7 +56,6 @@ class UserDetail {
     return db.execute(query, params);
   }
 
-  // Metode deleteUserDetails untuk menghapus detail pengguna berdasarkan userId
   static deleteUserDetails(userId) {
     return db
       .execute('DELETE FROM UserDetail WHERE user_id = ?', [userId])
@@ -61,5 +63,4 @@ class UserDetail {
   }
 }
 
-// Mengekspor kelas UserDetail
 module.exports = UserDetail;

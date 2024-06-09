@@ -1,10 +1,10 @@
-// Mengimpor model UserDetail yang digunakan untuk berinteraksi dengan database terkait detail pengguna
 const UserDetail = require('../../models/UserDetail');
+const Auth = require('../../models/Auth');
+const admin = require('../../config/firebase');
 
-// Fungsi digunakan untuk mengambil detail pengguna berdasarkan `userId`
 exports.getUserDetails = async (req, res) => {
-  const userId = req.params.userId;
   try {
+    const userId = req.params.userId;
     const [details] = await UserDetail.getUserDetails(userId);
     if (details.length === 0) {
       return res.status(404).send('User details not found');
@@ -17,15 +17,15 @@ exports.getUserDetails = async (req, res) => {
   }
 };
 
-// Fungsi digunakan untuk memperbarui detail pengguna berdasarkan `userId`
 exports.updateUserDetails = async (req, res) => {
-  const userId = req.params.userId;
-  const {dob, height, waistSize, weight, gender, allergen, disease} = req.body;
-
-  // Umur dihitung dari tanggal lahir (`dob`) dan disimpan dalam database
-  const age = new Date().getFullYear() - new Date(dob).getFullYear();
-
   try {
+    const userId = req.params.userId;
+    const {dob, height, waistSize, weight, gender, allergen, disease} =
+      req.body;
+
+    // Calculate age from dob and store it in the database
+    const age = new Date().getFullYear() - new Date(dob).getFullYear();
+
     await UserDetail.updateUserDetails(
       userId,
       dob,
@@ -37,7 +37,6 @@ exports.updateUserDetails = async (req, res) => {
       disease,
       age,
     );
-    // Memperbarui detail pengguna dalam database
     res.send({message: 'User details updated successfully'});
   } catch (error) {
     res
@@ -46,11 +45,18 @@ exports.updateUserDetails = async (req, res) => {
   }
 };
 
-// Fungsi digunakan untuk menghapus detail pengguna berdasarkan `userId`
 exports.deleteUserDetails = async (req, res) => {
-  const userId = req.params.userId;
   try {
-    await UserDetail.deleteUserDetails(userId);
+    const userId = req.params.userId;
+
+    // get email from database
+    const user = await Auth.findUserById(userId);
+
+    // delete in firebase
+    await admin.auth().deleteUser(user.email);
+
+    await await UserDetail.deleteUserDetails(userId);
+
     res.send({message: 'User details deleted successfully'});
   } catch (error) {
     res

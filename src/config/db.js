@@ -1,10 +1,10 @@
 const mysql = require('mysql2');
 const dotenv = require('dotenv');
 
-// Memuat variabel lingkungan
+// Load environment variables
 dotenv.config();
 
-// Membuat pool koneksi
+// Create a connection pool
 const pool = mysql.createPool({
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
@@ -15,7 +15,7 @@ const pool = mysql.createPool({
   queueLimit: 0,
 });
 
-// Pembungkus janji untuk memungkinkan penggunaan async/await
+// The promise wrapper to allow using async/await
 const promisePool = pool.promise();
 
 module.exports = promisePool;

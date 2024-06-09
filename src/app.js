@@ -20,10 +20,12 @@ app.get('/', (req, res) => {
 // Import routes
 const authRoutes = require('./api/auth/authRoutes');
 const userRoutes = require('./api/users/userRoutes');
+const userProgramRoutes = require('./api/userprogram/userProgramRoutes');
 
 // Use Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/userprogram', userProgramRoutes);
 
 // GET /protected (protected route)
 app.get('/protected', verifyToken, (req, res) => {

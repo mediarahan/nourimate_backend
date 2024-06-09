@@ -9,12 +9,13 @@ CREATE TABLE User (
     name VARCHAR(255),
     email VARCHAR(255) UNIQUE,
     password VARCHAR(255),
-    phoneNumber VARCHAR(255),
+    phoneNumber VARCHAR(255) UNIQUE,
     accessToken VARCHAR(255),
     refreshToken VARCHAR(255),
     emailToken VARCHAR(255),
     smsToken VARCHAR(255),
     is_verified BOOLEAN DEFAULT FALSE
+    isDetailFilled BOOLEAN DEFAULT FALSE,
 );
 
 -- Create UserDetail table
@@ -31,7 +32,6 @@ CREATE TABLE UserDetail (
     bmi FLOAT,
     idealWeight INT,
     age INT DEFAULT 0,
-    isDetailFilled BOOLEAN DEFAULT FALSE,
     FOREIGN KEY (user_id) REFERENCES User(user_id)
 );
 

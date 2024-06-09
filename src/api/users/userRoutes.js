@@ -6,8 +6,8 @@ const verifyToken = require('../../middleware/auth');
 // GET /api/users/:userId/details
 router.get('/:userId/details', verifyToken, userController.getUserDetails);
 
-// PUT /api/users/:userId/details
-router.put('/:userId/details', verifyToken, userController.updateUserDetails);
+// POST /api/users/:userId/details
+router.post('/:userId/details', verifyToken, userController.updateUserDetails);
 
 // DELETE /api/users/:userId/details
 router.delete(
