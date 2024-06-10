@@ -132,11 +132,7 @@ exports.signinUser = async (req, res) => {
 };
 
 exports.requestPasswordReset = async (req, res) => {
-  const {email, confirm_email} = req.body;
-
-  if (email !== confirm_email) {
-    return res.status(400).send({message: 'Emails do not match'});
-  }
+  const {email} = req.body;
 
   try {
     const user = await Auth.findUserByEmail(email);
@@ -178,7 +174,11 @@ exports.requestPasswordReset = async (req, res) => {
 
 exports.verifyResetPasswordToken = async (req, res) => {
   const {token} = req.params;
-  const {email, password} = req.body;
+  const {email, password, confirm_pass} = req.body;
+
+  if (password !== confirm_pass) {
+    return res.status(400).send({message: 'Password do not match'});
+  }
 
   try {
     // First, verify the token's validity using JWT to ensure it's correctly structured and signed
