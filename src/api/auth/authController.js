@@ -150,7 +150,7 @@ exports.requestPasswordReset = async (req, res) => {
     await Auth.updateTokens(user.user_id, accessToken, refreshToken);
 
     // send the password reset link via email
-    const resetLink = `http://localhost:3000/reset-password?token=${accessToken}`;
+    const resetLink = `https://nourimate.com/resetpassword?token=${accessToken}`;
     await admin
       .firestore()
       .collection('mail')
@@ -161,7 +161,6 @@ exports.requestPasswordReset = async (req, res) => {
           subject: 'Password Reset Link',
           html: `
           <p>Click <a href="${resetLink}">here</a> to reset your password.</p>
-          <p>${accessToken}</p>
           `,
         },
       });
@@ -174,9 +173,9 @@ exports.requestPasswordReset = async (req, res) => {
 
 exports.verifyResetPasswordToken = async (req, res) => {
   const {token} = req.params;
-  const {email, password, confirm_pass} = req.body;
+  const {email, password, confirm_password} = req.body;
 
-  if (password !== confirm_pass) {
+  if (password !== confirm_password) {
     return res.status(400).send({message: 'Password do not match'});
   }
 
