@@ -14,8 +14,8 @@ CREATE TABLE User (
     refreshToken VARCHAR(255),
     emailToken VARCHAR(255),
     smsToken VARCHAR(255),
-    is_verified BOOLEAN DEFAULT FALSE
-    isDetailFilled BOOLEAN DEFAULT FALSE,
+    is_verified BOOLEAN DEFAULT FALSE,
+    isDetailFilled BOOLEAN DEFAULT FALSE
 );
 
 -- Create UserDetail table

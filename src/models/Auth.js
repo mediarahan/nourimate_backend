@@ -58,7 +58,7 @@ class Auth {
 
   static async loginUser(email, password) {
     const [users] = await db.execute(
-      'SELECT u.user_id, u.is_verified, u.isDetailFilled, u.password, u.name u.phoneNumber FROM User u JOIN UserDetail ud ON u.user_id = ud.user_id WHERE u.email = ?',
+      'SELECT u.user_id, u.is_verified, u.isDetailFilled, u.password, u.phoneNumber FROM User u JOIN UserDetail ud ON u.user_id = ud.user_id WHERE u.email = ?',
       [email],
     );
 
