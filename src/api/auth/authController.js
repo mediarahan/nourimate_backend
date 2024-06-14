@@ -150,21 +150,30 @@ exports.requestPasswordReset = async (req, res) => {
     await Auth.updateTokens(user.user_id, accessToken, refreshToken);
 
     // send the password reset link via email
-    const resetLink = `nourimateapp://reset/password/token?value=${accessToken}`;
-    await admin
-      .firestore()
-      .collection('mail')
-      .add({
-        to: email,
-        message: {
-          from: `Your App <no-reply@your-app.com>`,
-          subject: 'Password Reset Link',
-          html: `
+    const resetLink = `${process.env.APP_PROTOCOL}://${
+      process.env.APP_HOST
+    }/api/auth/redirect?token=${encodeURIComponent(accessToken)}`;
+
+    console.log(resetLink);
+
+    try {
+      await admin
+        .firestore()
+        .collection('mail')
+        .add({
+          to: email,
+          message: {
+            from: `Your App <no-reply@your-app.com>`,
+            subject: 'Password Reset Link',
+            html: `
           <p>Click <a href="${resetLink}">here</a> to reset your password.</p>
-          <p>${accessToken}</p>
-          `,
-        },
-      });
+        `,
+          },
+        });
+      console.log('Email sent successfully!');
+    } catch (error) {
+      console.error('Failed to send email:', error);
+    }
 
     res.send('Reset password link has been sent to your email.');
   } catch (error) {
@@ -414,4 +423,21 @@ exports.googleUpdateUser = async (req, res) => {
       details: err.message,
     });
   }
+};
+
+exports.redirectUser = (req, res) => {
+  const token = encodeURIComponent(req.query.token); // Encode the token for URL safety
+  res.send(`
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <title>Redirecting...</title>
+            <meta http-equiv="refresh" content="0; url=nourimateapp://reset/password/token?value=${token}">
+        </head>
+        <body>
+            <p>If you are not redirected, <a href="nourimateapp://reset/password/token?value=${token}">click here</a>.</p>
+        </body>
+        </html>
+    `);
 };

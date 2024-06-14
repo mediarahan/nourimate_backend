@@ -57,4 +57,7 @@ router.post('/token', authController.refreshToken);
 // POST /api/auth/google-update-user
 router.post('/google-update-user', authController.googleUpdateUser);
 
+// GET /api/auth/redirect
+router.get('/redirect', authController.redirectUser);
+
 module.exports = router;
