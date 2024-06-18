@@ -21,11 +21,13 @@ app.get('/', (req, res) => {
 const authRoutes = require('./api/auth/authRoutes');
 const userRoutes = require('./api/users/userRoutes');
 const userProgramRoutes = require('./api/userprogram/userProgramRoutes');
+const mealHistoryRoutes = require('./api/mealhistory/mealHistoryRoutes')
 
 // Use Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/userprogram', userProgramRoutes);
+app.use('/api/mealhistory', mealHistoryRoutes)
 
 // GET /protected (protected route)
 app.get('/protected', verifyToken, (req, res) => {

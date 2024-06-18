@@ -433,10 +433,10 @@ exports.redirectUser = (req, res) => {
         <head>
             <meta charset="UTF-8">
             <title>Redirecting...</title>
-            <meta http-equiv="refresh" content="0; url=nourimateapp://reset/password/token?value=${token}">
+            <meta http-equiv="refresh" content="0; url=https://nourimate-ta.web.app/reset/password/?token=${token}">
         </head>
         <body>
-            <p>If you are not redirected, <a href="nourimateapp://reset/password/token?value=${token}">click here</a>.</p>
+            <p>If you are not redirected, <a href="https://nourimate-ta.web.app/reset/password/?token=${token}">click here</a>.</p>
         </body>
         </html>
     `);

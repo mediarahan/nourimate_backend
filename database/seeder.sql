@@ -47,3 +47,13 @@ CREATE TABLE UserProgram (
     user_id INT NOT NULL,
     FOREIGN KEY (user_id) REFERENCES User(user_id)
 );
+
+-- Create MealHistory table
+CREATE TABLE consumed_recipes (
+    mealHistoryId INT AUTO_INCREMENT PRIMARY KEY,
+    recipeId INT NOT NULL,
+    consumedTime TIMESTAMP NOT NULL,
+    consumedDate VARCHAR(50),
+    user_id INT NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES User(user_id)
+);
