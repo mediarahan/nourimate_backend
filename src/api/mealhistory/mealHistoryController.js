@@ -3,14 +3,12 @@ const MealHistory = require('../../models/mealHistory');
 exports.getAllMealHistories = async (req, res) => {
   try {
     const [mealHistories] = await MealHistory.findAll();
-    res.send([
-      {
-        message: 'Meal histories retrieved successfully',
-        mealHistories,
-      },
-    ]);
+    res.status(200).json({
+      message: 'Meal histories retrieved successfully',
+      mealHistories: mealHistories,
+    });
   } catch (error) {
-    res.status(500).send({
+    res.status(500).json({
       message: 'Failed to retrieve meal histories',
       error: error.message,
     });
@@ -18,74 +16,82 @@ exports.getAllMealHistories = async (req, res) => {
 };
 
 exports.getMealHistory = async (req, res) => {
+  const mealHistoryId = req.params.mealHistoryId;
   try {
-    const mealHistoryId = req.params.mealId;
-    const [mealHistory] = await mealHistory.findById(mealHistoryId);
+    const [mealHistory] = await MealHistory.findById(mealHistoryId);
     if (!mealHistory) {
-      return res.status(404).send('Meal Histories not found');
+      return res.status(404).json({ message: 'Meal history not found' });
     }
-    res.send({
-      message: 'Meal Histories retrieved successfully',
-      mealHistory: mealHistory[0],
+    res.status(200).json({
+      message: 'Meal history retrieved successfully',
+      mealHistory: mealHistory,
     });
   } catch (error) {
-    res.status(500).send({
-      message: 'Failed to retrieve Meal Histories',
+    res.status(500).json({
+      message: 'Failed to retrieve meal history',
       error: error.message,
     });
   }
 };
 
 exports.createMealHistory = async (req, res) => {
+  const { recipeId, consumedTime, consumedDate, user_id } = req.body;
   try {
-    const mealHistoryData = req.body;
-    await MealHistory.create(mealHistoryData);
-    res.send({message: 'Meal Histories created successfully'});
+    await MealHistory.create({
+      recipeId,
+      consumedTime,
+      consumedDate,
+      user_id,
+    });
+    res.status(201).json({ message: 'Meal history created successfully' });
   } catch (error) {
-    res.status(500).send({
-      message: 'Failed to create Meal Histories',
+    res.status(500).json({
+      message: 'Failed to create meal history',
       error: error.message,
     });
   }
 };
 
 exports.updateMealHistory = async (req, res) => {
+  const mealHistoryId = req.params.mealHistoryId;
+  const { recipeId, consumedTime, consumedDate, user_id } = req.body;
   try {
-    const mealHistoryId = req.params.mealId;
-    const mealHistoryData = req.body;
-    const [updated] = await MealHistory.update(mealHistoryData, {
-      where: { id: mealHistoryId }
+    const updated = await MealHistory.update(mealHistoryId, {
+      recipeId,
+      consumedTime,
+      consumedDate,
+      user_id,
     });
     if (updated) {
-      const updatedMealHistory = await MealHistory.findByPk(mealHistoryId);
-      res.send({message: 'Meal histores updated successfully', updatedMealHistory});
+      const updatedMealHistory = await MealHistory.findById(mealHistoryId);
+      res.status(200).json({
+        message: 'Meal history updated successfully',
+        updatedMealHistory: updatedMealHistory[0],
+      });
     } else {
-      res.status(404).send('Meal histores not found');
+      res.status(404).json({ message: 'Meal history not found' });
     }
   } catch (error) {
-    res.status(500).send({
-      message: 'Failed to update meal histories',
+    res.status(500).json({
+      message: 'Failed to update meal history',
       error: error.message,
     });
   }
 };
 
 exports.deleteMealHistory = async (req, res) => {
+  const mealHistoryId = req.params.mealHistoryId;
   try {
-    const mealHistoryId = req.params.id;
-    const deleted = await MealHistory.destroy({
-      where: { id: mealHistoryId }
-    });
+    const deleted = await MealHistory.delete(mealHistoryId);
     if (deleted) {
-      res.send({message: 'Meal histories deleted successfully'});
+      res.status(200).json({ message: 'Meal history deleted successfully' });
     } else {
-      res.status(404).send('Meal histories not found');
+      res.status(404).json({ message: 'Meal history not found' });
     }
   } catch (error) {
-    res.status(500).send({
-      message: 'Failed to delete meal histories',
+    res.status(500).json({
+      message: 'Failed to delete meal history',
       error: error.message,
     });
   }
 };
-

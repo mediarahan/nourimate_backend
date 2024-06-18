@@ -57,3 +57,20 @@ CREATE TABLE consumed_recipes (
     user_id INT NOT NULL,
     FOREIGN KEY (user_id) REFERENCES User(user_id)
 );
+
+-- Create History table
+CREATE TABLE history (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    program_name VARCHAR(255) NOT NULL,
+    start_date VARCHAR(50) NOT NULL,
+    end_date VARCHAR(50) NOT NULL,
+    calories INT,
+    protein INT,
+    fat INT,
+    carbs INT,
+    start_weight INT,
+    end_weight INT,
+    user_id INT NOT NULL,
+    created_at BIGINT NOT NULL
+);
+
