@@ -72,5 +72,6 @@ CREATE TABLE history (
     end_weight INT,
     user_id INT NOT NULL,
     created_at BIGINT NOT NULL
+    FOREIGN KEY (user_id) REFERENCES User(user_id)
 );
 

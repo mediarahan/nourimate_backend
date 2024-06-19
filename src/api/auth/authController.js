@@ -150,9 +150,7 @@ exports.requestPasswordReset = async (req, res) => {
     await Auth.updateTokens(user.user_id, accessToken, refreshToken);
 
     // send the password reset link via email
-    const resetLink = `${process.env.APP_PROTOCOL}://${
-      process.env.APP_HOST
-    }/api/auth/redirect?token=${encodeURIComponent(accessToken)}`;
+    const resetLink = `https://nourimate-ta.web.app/reset/password/?token=${encodeURIComponent(accessToken)};`;
 
     console.log(resetLink);
 
