@@ -1,4 +1,6 @@
 -- Drop existing tables if they exist
+DROP TABLE IF EXISTS history;
+DROP TABLE IF EXISTS consumed_recipes;
 DROP TABLE IF EXISTS UserProgram;
 DROP TABLE IF EXISTS UserDetail;
 DROP TABLE IF EXISTS User;
@@ -71,7 +73,7 @@ CREATE TABLE history (
     start_weight INT,
     end_weight INT,
     user_id INT NOT NULL,
-    created_at BIGINT NOT NULL
+    created_at BIGINT NOT NULL,
     FOREIGN KEY (user_id) REFERENCES User(user_id)
 );
 

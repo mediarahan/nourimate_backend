@@ -30,17 +30,14 @@ class UserDetail {
       age
     );
 
-    const query = `
-    UPDATE UserDetail 
-    SET dob = ?, height = ?, waistSize = ?, weight = ?, gender = ?, allergen = ?, disease = ?, age = ?
-    WHERE user_id = ?
-  `;
-
+    // Update the isDetailFilled flag in the User table.
     db.execute('UPDATE User SET isDetailFilled = ? WHERE user_id = ?', [
       isDetailFilled,
       userId,
     ]);
 
+    // Prepare the query to update the UserDetail table.
+    const query = `UPDATE UserDetail SET dob = ?, height = ?, waistSize = ?, weight = ?, gender = ?, allergen = ?, disease = ?, age = ? WHERE user_id = ?`;
     const params = [
       dob,
       height,
@@ -50,9 +47,10 @@ class UserDetail {
       allergen,
       disease,
       age,
-      isDetailFilled,
-      userId,
+      userId, // Ensure userId is last to match the placeholder in the query.
     ];
+
+    // Execute the update query for UserDetail.
     return db.execute(query, params);
   }
 

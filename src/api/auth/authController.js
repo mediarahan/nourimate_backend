@@ -150,9 +150,9 @@ exports.requestPasswordReset = async (req, res) => {
     await Auth.updateTokens(user.user_id, accessToken, refreshToken);
 
     // send the password reset link via email
-    const resetLink = `https://nourimate-ta.web.app/reset/password/?token=${encodeURIComponent(accessToken)};`;
-
-    console.log(resetLink);
+    const resetLink = `https://nourimate-ta.web.app/reset/password/?token=${encodeURIComponent(
+      accessToken,
+    )};`;
 
     try {
       await admin
@@ -378,6 +378,7 @@ exports.googleVerifyToken = async (req, res) => {
         is_verified: user ? user.is_verified : null,
         isDetailFilled: user ? user.isDetailFilled : null,
         phoneNumber: user ? user.phoneNumber : null,
+        name: user ? user.name : null,
       },
     });
   } catch (error) {

@@ -24,7 +24,9 @@ exports.updateUserDetails = async (req, res) => {
       req.body;
 
     // Calculate age from dob and store it in the database
-    const age = new Date().getFullYear() - new Date(dob).getFullYear();
+    const age = 1;
+
+    console.log(age);
 
     await UserDetail.updateUserDetails(
       userId,
