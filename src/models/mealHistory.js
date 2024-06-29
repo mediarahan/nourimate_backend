@@ -6,32 +6,48 @@ class MealHistory {
   }
 
   static async findById(mealHistoryId) {
-    return db.execute('SELECT * FROM consumed_recipes WHERE id = ?', [
-      mealHistoryId,
-    ]);
+    return db.execute(
+      'SELECT * FROM consumed_recipes WHERE mealHistoryId = ?',
+      [mealHistoryId],
+    );
   }
 
   static async create(data) {
     const {recipeId, consumedTime, consumedDate, user_id} = data;
-    return db.execute(
-      `INSERT INTO consumed_recipes (recipe_id, consumedTime, consumedDate, user_id) 
-       VALUES (?, ?, ?, ?)`,
-      [recipeId, consumedTime, consumedDate, user_id],
-    );
+    const sql = `
+    INSERT INTO consumed_recipes 
+      (recipeId, consumedTime, consumedDate, user_id) 
+    VALUES 
+      (?, ?, ?, ?)
+  `;
+    try {
+      await db.execute(sql, [recipeId, consumedTime, consumedDate, user_id]);
+
+      const [result] = await db.execute(
+        'SELECT * FROM consumed_recipes WHERE mealHistoryId = LAST_INSERT_ID()',
+      );
+      if (result.length === 0) {
+        throw new Error('Failed to fetch newly created meal history record');
+      }
+
+      return result[0];
+    } catch (error) {
+      throw new Error(`Error creating meal history: ${error.message}`);
+    }
   }
 
   static async update(mealHistoryId, data) {
     const {recipeId, consumedTime, consumedDate, user_id} = data;
     return db.execute(
       `UPDATE consumed_recipes 
-       SET recipe_id = ?, consumedTime = ?, consumedDate = ?, user_id = ?
-       WHERE id = ?`,
+       SET recipeId = ?, consumedTime = ?, consumedDate = ?, user_id = ?
+       WHERE mealHistoryId = ?`,
       [recipeId, consumedTime, consumedDate, user_id, mealHistoryId],
     );
   }
 
   static async delete(mealHistoryId) {
-    return db.execute('DELETE FROM consumed_recipes WHERE id = ?', [
+    return db.execute('DELETE FROM consumed_recipes WHERE mealHistoryId = ?', [
       mealHistoryId,
     ]);
   }

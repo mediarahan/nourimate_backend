@@ -2,7 +2,7 @@ const History = require('../../models/history');
 
 exports.getAllHistories = async (req, res) => {
   try {
-    const histories = await History.findAll();
+    const [histories] = await History.findAll();
     res.status(200).json({
       message: 'Histories retrieved successfully',
       histories,
@@ -17,10 +17,10 @@ exports.getAllHistories = async (req, res) => {
 
 exports.getHistory = async (req, res) => {
   try {
-    const { id } = req.params;
+    const {id} = req.params;
     const [history] = await History.findById(id);
     if (!history) {
-      return res.status(404).json({ message: 'History not found' });
+      return res.status(404).json({message: 'History not found'});
     }
     res.status(200).json({
       message: 'History retrieved successfully',
@@ -49,7 +49,8 @@ exports.createHistory = async (req, res) => {
       userId,
       createdAt,
     } = req.body;
-    const [result] = await History.create({
+
+    const historyData = {
       programName,
       startDate,
       endDate,
@@ -61,8 +62,14 @@ exports.createHistory = async (req, res) => {
       endWeight,
       userId,
       createdAt,
+    };
+
+    const createdHistory = await History.create(historyData);
+
+    res.status(201).json({
+      message: 'History created successfully',
+      history: createdHistory, // Return the newly created history object
     });
-    res.status(201).json({ message: 'History created successfully', history: result });
   } catch (error) {
     res.status(500).json({
       message: 'Failed to create history',
@@ -73,7 +80,7 @@ exports.createHistory = async (req, res) => {
 
 exports.updateHistory = async (req, res) => {
   try {
-    const { id } = req.params;
+    const {id} = req.params;
     const {
       programName,
       startDate,
@@ -107,7 +114,7 @@ exports.updateHistory = async (req, res) => {
         history: updatedHistory,
       });
     } else {
-      res.status(404).json({ message: 'History not found' });
+      res.status(404).json({message: 'History not found'});
     }
   } catch (error) {
     res.status(500).json({
@@ -119,12 +126,12 @@ exports.updateHistory = async (req, res) => {
 
 exports.deleteHistory = async (req, res) => {
   try {
-    const { id } = req.params;
+    const {id} = req.params;
     const deleted = await History.delete(id);
     if (deleted) {
-      res.status(200).json({ message: 'History deleted successfully' });
+      res.status(200).json({message: 'History deleted successfully'});
     } else {
-      res.status(404).json({ message: 'History not found' });
+      res.status(404).json({message: 'History not found'});
     }
   } catch (error) {
     res.status(500).json({
