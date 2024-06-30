@@ -3,7 +3,7 @@ const db = require('../config/db');
 class UserDetail {
   static getUserDetails(userId) {
     return db.execute(
-      'SELECT UserDetail.*, User.* FROM UserDetail JOIN User ON UserDetail.user_id = ?',
+      'SELECT * FROM UserDetail WHERE user_id = ?',
       [userId],
     );
   }

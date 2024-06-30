@@ -206,9 +206,9 @@ exports.verifyResetPasswordToken = async (req, res) => {
     // Update the user's password in the database
     await Auth.updatePassword(decoded.userId, hashedPassword);
 
-    res.send(
-      'Your password has been successfully reset. You can now log in with the new password.',
-    );
+    res.json({
+      message: 'Your password has been successfully reset. You can now log in with the new password.'
+    });
   } catch (error) {
     if (error.name === 'TokenExpiredError') {
       return res.status(401).send('Reset token has expired.');
